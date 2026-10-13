@@ -16,6 +16,12 @@ Did the observed conversion rate differ between users assigned to the ad and PSA
 6. **Synthetic CUPED:** separate generated randomized experiment with a simulated pre-treatment covariate. The marketing data contains no genuine pre-treatment covariate, so no CUPED benefit is claimed for it.
 7. **Exploratory regression/HTE:** logistic models with `total_ads` and a treatment interaction. Since `total_ads` is post-treatment exposure, these models do not provide clean causal effect-modification estimates. A nonsignificant interaction does not prove equal effects.
 
+## Key findings
+
+On the current dataset, the ad group has a **2.555%** observed conversion rate versus **1.785%** for the PSA group. The observed absolute difference is **+0.769 percentage points** (relative lift **+43.09%**). The two-proportion Z-test gives **p = 1.705 × 10⁻¹³**, with an approximate 95% confidence interval for the absolute lift of **[0.595, 0.943] percentage points**; the bootstrap interval is similar at **[0.596, 0.939] percentage points**.
+
+These are observed group differences, not automatically causal effects. The intended assignment ratio is undocumented, so sample-ratio mismatch (SRM) remains **untested**. The dataset also lacks cost/ROI and guardrail metrics, and the CUPED example is synthetic.
+
 ## Data and SRM assumptions
 
 The expected input `marketing_AB.csv` is in the repository root. Column names are normalized from spaces to underscores.
