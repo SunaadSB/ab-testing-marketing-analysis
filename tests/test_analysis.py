@@ -113,3 +113,10 @@ def test_synthetic_cuped_reproducible():
 def test_invalid_cuped_sample_size_rejected(n):
     with pytest.raises(ValueError, match="even integer"):
         synthetic_cuped_demo(n=n)
+
+
+def test_infinite_total_ads_rejected():
+    df = fixture_df()
+    df.loc[0, "total_ads"] = np.inf
+    with pytest.raises(ValueError, match="finite"):
+        validate_data(df)
