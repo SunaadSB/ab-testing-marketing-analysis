@@ -31,6 +31,9 @@ def test_missing_column_rejected():
 @pytest.mark.parametrize("bad", [2, -1, "bad"])
 def test_nonbinary_conversion_rejected(bad):
     df = fixture_df()
+    # Use object dtype so invalid strings can reach validate_data rather than
+    # being rejected by pandas during test-fixture assignment.
+    df["converted"] = df["converted"].astype(object)
     df.loc[0, "converted"] = bad
     with pytest.raises(ValueError, match="binary"):
         validate_data(df)
@@ -117,6 +120,8 @@ def test_invalid_cuped_sample_size_rejected(n):
 
 def test_infinite_total_ads_rejected():
     df = fixture_df()
+    # Float dtype allows infinity to be assigned so validation is what rejects it.
+    df["total_ads"] = df["total_ads"].astype(float)
     df.loc[0, "total_ads"] = np.inf
     with pytest.raises(ValueError, match="finite"):
         validate_data(df)
