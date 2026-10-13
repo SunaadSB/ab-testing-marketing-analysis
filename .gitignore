@@ -1,1 +1,10 @@
 archive.zip
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
