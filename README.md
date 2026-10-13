@@ -1,6 +1,18 @@
 # A/B Testing & Statistical Significance Analysis
 
-Reproducible analysis of the [Marketing A/B Testing dataset](https://www.kaggle.com/datasets/faviovaz/marketing-ab-testing) by Faviovaz (588,101 user rows), comparing an ad condition with a PSA control.
+[![Test analysis](https://github.com/SunaadSB/ab-testing-marketing-analysis/actions/workflows/test-analysis.yml/badge.svg?branch=main)](https://github.com/SunaadSB/ab-testing-marketing-analysis/actions/workflows/test-analysis.yml)
+
+A reproducible, test-backed analysis of the [Marketing A/B Testing dataset](https://www.kaggle.com/datasets/faviovaz/marketing-ab-testing) (588,101 user rows), comparing an ad condition with a public service announcement (PSA) control.
+
+**Project focus:** experiment-data validation, conversion-rate hypothesis testing, uncertainty intervals, bootstrap validation, retrospective power analysis, and responsible interpretation of causal claims.
+
+## Quick result
+
+The observed conversion rate is **2.555%** in the ad group and **1.785%** in the PSA group: an absolute difference of **+0.769 percentage points** (relative lift **+43.09%**). The two-proportion Z-test reports **p = 1.705 × 10⁻¹³**.
+
+> **Interpretation caveat:** statistical significance alone does not establish causality or business ROI. The dataset does not document the intended allocation ratio, so SRM is not tested; cost and guardrail metrics are also unavailable.
+
+**Explore the project:** [Analysis notebook](ab_test_analysis.ipynb) · [Python analysis module](ab_test_analysis.py) · [Unit tests](tests/test_analysis.py)
 
 ## Research question
 
