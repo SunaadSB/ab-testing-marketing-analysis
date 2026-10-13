@@ -54,8 +54,8 @@ def validate_data(df):
         raise ValueError("converted must contain only binary values 0 and 1.")
     df["converted"] = converted.astype(int)
     total_ads = pd.to_numeric(df["total_ads"], errors="coerce")
-    if total_ads.isna().any() or (total_ads < 0).any():
-        raise ValueError("total_ads must contain numeric, non-negative values.")
+    if total_ads.isna().any() or not np.isfinite(total_ads.to_numpy(dtype=float)).all() or (total_ads < 0).any():
+        raise ValueError("total_ads must contain finite, numeric, non-negative values.")
     df["total_ads"] = total_ads
     return df
 
