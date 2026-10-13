@@ -1,70 +1,66 @@
 # A/B Testing & Statistical Significance Analysis
 
-End-to-end A/B test analysis on a real-world marketing dataset, extended with production-grade experimentation techniques (SRM validation, power analysis, CUPED, and heterogeneous treatment effect testing).
+Reproducible analysis of the [Marketing A/B Testing dataset](https://www.kaggle.com/datasets/faviovaz/marketing-ab-testing) by Faviovaz (588,101 user rows), comparing an ad condition with a PSA control.
 
-## Problem
+## Research question
 
-A company ran an experiment comparing two conditions:
-- **`ad`** — users shown a product advertisement
-- **`psa`** — control group shown a generic public service announcement instead
+Did the observed conversion rate differ between users assigned to the ad and PSA conditions? Causal interpretation depends on valid assignment, measurement, and experiment assumptions.
 
-**Question:** Does showing ads increase conversion rate, and is the effect statistically and practically significant?
+## Methods
 
-**Dataset:** [Marketing A/B Testing](https://www.kaggle.com/datasets/faviovaz/marketing-ab-testing) (Kaggle, Faviovaz) — 588,101 users, columns: `user id`, `test group`, `converted`, `total ads`, `most ads day`, `most ads hour`.
+1. **Validation:** required columns, binary outcomes, group labels, missing values, numeric non-negative ad counts, and one row per user.
+2. **Two-proportion Z-test:** conversion rates, absolute/relative lift, p-value, and approximate 95% confidence interval.
+3. **Bootstrap:** reproducible percentile interval with a local random generator and seed. Binomial draws are equivalent to resampling binary outcomes with replacement.
+4. **Illustrative business impact:** ad conversions compared with the PSA baseline rate. This is conditional on causal assumptions, not proof that the difference was caused by ads.
+5. **Retrospective MDE:** approximate detectable effect for observed sample sizes at 80% power and alpha 0.05; not independent proof of adequate power.
+6. **Synthetic CUPED:** separate generated randomized experiment with a simulated pre-treatment covariate. The marketing data contains no genuine pre-treatment covariate, so no CUPED benefit is claimed for it.
+7. **Exploratory regression/HTE:** logistic models with `total_ads` and a treatment interaction. Since `total_ads` is post-treatment exposure, these models do not provide clean causal effect-modification estimates. A nonsignificant interaction does not prove equal effects.
 
-## Approach
+## Data and SRM assumptions
 
-1. **Sample Ratio Mismatch (SRM) check** — chi-square goodness-of-fit test confirming the observed group split matched the intended allocation ratio, ruling out randomization/logging bugs before trusting any downstream result.
-2. **Hypothesis testing** — two-sample Z-test for proportions, with absolute/relative lift and 95% confidence intervals.
-3. **Bootstrap validation** — 10,000-iteration resampling to cross-check the Z-test result without relying on normality assumptions.
-4. **Business impact translation** — converting the statistical lift into incremental conversions.
-5. **Power analysis / MDE** — confirming the sample size was sufficient to detect the observed effect (post-hoc, since this is historical data — in production this step precedes the experiment to size it correctly).
-6. **CUPED variance reduction** — demonstrating how a pre-experiment covariate shrinks variance and tightens confidence intervals.
-7. **Covariate adjustment + heterogeneous treatment effects (HTE)** — logistic regression controlling for ad exposure, plus an interaction term testing whether the treatment effect varies by exposure level.
+The expected input `marketing_AB.csv` is in the repository root. Column names are normalized from spaces to underscores.
 
-## Results
+SRM is **not tested** unless the experiment's intended allocation ratio is supplied from the experiment documentation. The ratio must not be inferred from observed counts. For example, only if documented:
 
-| Metric | Value |
-|---|---|
-| `ad` conversion rate | 2.55% |
-| `psa` conversion rate | 1.79% |
-| Absolute lift | 0.77 pp |
-| Relative lift | 43.1% |
-| p-value (Z-test) | < 0.0001 |
-| 95% CI | [0.60%, 0.94%] |
-| Bootstrap 95% CI | [0.59%, 0.94%] (matches Z-test) |
-| SRM check | No mismatch detected (p = 0.9998) |
-| MDE at observed sample size | 0.26 pp (well below observed 0.77 pp lift → well-powered) |
-| Extra conversions attributable to ads | ~4,343 |
-| CUPED variance reduction (simulated strong pre-period signal) | 28.5% (11% narrower CI) |
-| HTE by ad exposure (interaction term p-value) | 0.37 — not significant |
+```python
+check_srm(df, expected_ratio=(0.96, 0.04))
+```
 
-**Conclusion:** Ads produced a statistically significant and practically meaningful lift in conversion (43% relative, p < 0.0001), robust across two independent test methods (Z-test and bootstrap) and confirmed well-powered via MDE analysis. The treatment effect was stable across exposure levels (no significant interaction with `total_ads`), meaning the lift wasn't concentrated among heavy- or light-exposure users.
+## Run locally
 
-## Limitations
+Python 3.10+ is recommended.
 
-- **No cost or guardrail metrics.** The dataset has no ad spend, unsubscribe, or complaint data, so ROI and unintended negative effects couldn't be assessed — a full business decision would need these.
-- **CUPED uses a simulated pre-experiment covariate.** No genuine pre-period metric exists in this dataset (all columns reflect in-experiment behavior). The pre-period engagement score was simulated to demonstrate the CUPED mechanism correctly; production use requires a real historical covariate (e.g., prior purchase activity).
-- **SRM expected ratio was inferred**, not sourced from documented experiment design, since the dataset doesn't include the intended allocation split.
+```bash
+python -m venv .venv
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements.txt
+python ab_test_analysis.py
+python -m pytest
+jupyter notebook ab_test_analysis.ipynb
+```
 
-## Project Structure
+Run the notebook from the repository root. The script resolves its default CSV path relative to its own file. Notebook cells use shared functions from `ab_test_analysis.py`.
+
+## Repository layout
 
 ```
-ab_test_project/
-├── data/
-│   └── marketing_AB.csv
-├── notebooks/
-│   └── ab_test_analysis.ipynb   # Executed notebook with all outputs
-├── src/
-│   └── ab_test_analysis.py      # Same pipeline as a runnable script
+.
+├── marketing_AB.csv
+├── ab_test_analysis.py
+├── ab_test_analysis.ipynb
+├── requirements.txt
+├── tests/
+│   └── test_analysis.py
+├── .gitignore
 └── README.md
 ```
 
-## Running It
+## Interpretation guardrails
 
-```bash
-pip install pandas numpy scipy statsmodels
-python src/ab_test_analysis.py
-```
-
-or open `notebooks/ab_test_analysis.ipynb` in Jupyter.
+- Statistical significance does not establish ROI or net benefit; cost and guardrail metrics are unavailable.
+- The Z-test confidence interval is a normal-approximation interval.
+- SRM is not tested without a documented allocation ratio.
+- CUPED results are synthetic teaching output, not results from the marketing data.
+- Regression/HTE is exploratory because ad exposure is post-treatment.
+- MDE is a retrospective descriptive calculation, not independent evidence that the experiment was well-powered.
